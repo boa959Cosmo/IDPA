@@ -6,21 +6,22 @@ const express = require('express')
 const cors = require('cors')
  
 const app = express()
+
 const webInterface = http.createServer(app)
 
 app.use(cors())
 app.use(express.json())
-app.use(express.static("./client-vanilla"))
+app.use(express.static("./web"))
 
 
 const PORTUDP = 6969
-const PORTWEB = 8080
-const HOST = '127.0.0.1'
+const PORTWEB = 3000
+var clientAddress 
 
 const server = dgram.createSocket('udp4')
 const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.xlsx'), {flags: 'a'})
 
-server.bind(PORTUDP, HOST);
+server.bind(PORTUDP);
 
 server.on('listening', function () {
     var address = server.address();
@@ -38,9 +39,23 @@ server.on('message', (msg, remote) => {
     msg = JSON.parse(msg)
 
     console.log(remote.address + ':' + remote.port +' - ' + msg.category)
-    telemetry(msg, remote)
-
+    if (msg.category == 'telemetry') {
+        telemetry(msg, remote)
+        clientAddress = remote.address
+    }
+    console.log(clientAddress);
 });
+
+
+export function testSend(message) {
+    server.send(message, PORTUDP, clientAddress, function(err, bytes) {
+        if (err) throw err;
+        console.log('UDP message sent to ' + HOST +':'+ PORT);
+        client.close()
+    })
+}
+
+
 function telemetry(msg, remote) {
     let now = new Date()
     telemetryLogStream.write(now.getDate()+'.'
