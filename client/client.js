@@ -3,7 +3,7 @@ const { stringify } = require('querystring');
 
 const PORT = 6969;
 const HOST = '188.60.111.34';
-
+console.log(HOST);
 //let message = Buffer.from('My KungFu is Good!');
 let message = Buffer.from(JSON.stringify({category: 'telemetry', auto: 'audi', bus: 'bmw'}))
 

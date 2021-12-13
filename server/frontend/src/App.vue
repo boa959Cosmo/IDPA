@@ -1,18 +1,32 @@
 <template>
-  <img alt="Vue logo" src="./assets/logo.png">
-  <HelloWorld msg="Welcome to Your Vue.js App"/>
+  <div v-on:up.right="test()" id="all">
+    <input type="text" v-on:keydown.right="test()">
+  </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
-
+import axios from "axios"
 export default {
-  name: 'App',
-  components: {
-    HelloWorld
-  }
+    name: 'app',
+    props: {
+        msg: String
+    },
+    data() {
+    },
+    methods:{
+      async test(){
+          await axios.post("http://localhost:3000/move1")
+      }
+    },
+    computed: {
+      
+    },
+    mounted() {
+      
+    },
 }
 </script>
+
 
 <style>
 #app {
@@ -22,5 +36,12 @@ export default {
   text-align: center;
   color: #2c3e50;
   margin-top: 60px;
+  width: 100%;
+  height: 100vh;
+}
+#all {
+  width: 100%;
+  height: 100vh;
+  background-color: blueviolet;
 }
 </style>

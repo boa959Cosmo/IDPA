@@ -11,51 +11,24 @@ const webInterface = http.createServer(app)
 
 app.use(cors())
 app.use(express.json())
-app.use(express.static("./web"))
 
 
 const PORTUDP = 6969
-const PORTWEB = 3000
+const PORTBACKEND = 3000
 var clientAddress 
 
 const server = dgram.createSocket('udp4')
 const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.xlsx'), {flags: 'a'})
-
-server.bind(PORTUDP);
-
-server.on('listening', function () {
-    var address = server.address();
-    console.log('UDP Server listening on ' + address.address + ":" + address.port);
-});
+//------------------------------HTTP APIS
 
 
-/*
-server.on('message', function (msg, remote) {
-
-    console.log(remote.address + ':' + remote.port +' - ' + msg);
-});
-*/
-server.on('message', (msg, remote) => {
-    msg = JSON.parse(msg)
-
-    console.log(remote.address + ':' + remote.port +' - ' + msg.category)
-    if (msg.category == 'telemetry') {
-        telemetry(msg, remote)
-        clientAddress = remote.address
-    }
-    console.log(clientAddress);
-});
+app.post("/move1", (req, res) => {
+    console.log('Move 1');
+})
 
 
-export function testSend(message) {
-    server.send(message, PORTUDP, clientAddress, function(err, bytes) {
-        if (err) throw err;
-        console.log('UDP message sent to ' + HOST +':'+ PORT);
-        client.close()
-    })
-}
 
-
+//--------------------------FUNCTIONS
 function telemetry(msg, remote) {
     let now = new Date()
     telemetryLogStream.write(now.getDate()+'.'
@@ -68,13 +41,28 @@ function telemetry(msg, remote) {
                         +msg.auto +'\r\n')  
 }
 
+//----------------------------UDP SHIT
+server.bind(PORTUDP);
+
+server.on('listening', function () {
+    var address = server.address();
+    console.log('UDP Server listening on ' + address.address + ":" + address.port);
+});
+
+server.on('message', (msg, remote) => {
+    msg = JSON.parse(msg)
+
+    console.log(remote.address + ':' + remote.port +' - ' + msg.category)
+    if (msg.category == 'telemetry') {
+        telemetry(msg, remote)
+        clientAddress = remote.address
+    }
+    console.log(clientAddress);
+});
 
 
-webInterface.listen(PORTWEB, () => {
-    console.log("[HTTP] Online on port " + PORTWEB);
+webInterface.listen(PORTBACKEND, () => {
+    console.log("[HTTP] Online on port " + PORTBACKEND);
 })
 
-//test 2
-// ---> giver
-// ---> requester
-// ---> web
+
