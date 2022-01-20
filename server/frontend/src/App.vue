@@ -1,10 +1,15 @@
 <template>
+  <div>
     <input v-on:keyup.up="control('up')" type="text">
+    <img v-bind:src="this.data.socket.camera"> 
+  </div>
 </template>
   
 
 <script>
 import axios from "axios"
+
+
 
 export default {
     name: 'App',
@@ -12,6 +17,16 @@ export default {
         msg: String
     },
     data() {
+      return {
+        socket:{
+          camera: ''
+        }
+      }
+    },
+    sockets: {
+      MessageChannel(data) {
+        this.socket.camera = data
+      }
     },
     methods:{
       async control(content){

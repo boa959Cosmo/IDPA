@@ -4,10 +4,17 @@ const path = require('path')
 const http = require('http')
 const express = require('express')
 const cors = require('cors')
- 
 const app = express()
+const socketio = require('socket.io')
+
 
 const webInterface = http.createServer(app)
+
+const io = socketio(webInterface, {
+    cors: {
+        origin: '*',
+    }
+})
 
 app.use(cors())
 app.use(express.json())
@@ -35,8 +42,9 @@ server.on('message', (msg, remote) => {
     console.log(msg.telemetry);
     console.log(remote.address + ':' + remote.port)
     telemetry(msg, remote)
-
+    io.sockets.emit("frame", msg.camera)
 })
+
 
 function telemetry(msg, remote) {
     let now = new Date()
