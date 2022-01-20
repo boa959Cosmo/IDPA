@@ -5,14 +5,12 @@ const http = require('http')
 const express = require('express')
 const cors = require('cors')
 const app = express()
-const socketio = require('socket.io')
-
-
+const socketio = require("socket.io")
 const webInterface = http.createServer(app)
 
 const io = socketio(webInterface, {
     cors: {
-        origin: '*',
+        origin: '*:*',
     }
 })
 
@@ -39,11 +37,11 @@ server.on('listening', function () {
 server.on('message', (msg, remote) => {
     msg = msg.toString()
     msg = JSON.parse(msg)
-    console.log(msg.telemetry);
     console.log(remote.address + ':' + remote.port)
     telemetry(msg, remote)
-    io.sockets.emit("frame", msg.camera)
+    io.emit("frame", msg.camera)
 })
+
 
 
 function telemetry(msg, remote) {

@@ -8,7 +8,9 @@
 
 <script>
 import axios from "axios"
-
+import socketio from 'socket.io'
+import VueSocketIO from 'vue-socket.io'
+export const SocketInstance = socketio('http://localhost:3000');
 
 
 export default {
@@ -24,9 +26,14 @@ export default {
       }
     },
     sockets: {
-      MessageChannel(data) {
+      connect: function () {
+        console.log('socket connected')
+      },
+      messageChannel(data) {
+        console.log("test");
         this.socket.camera = data
       }
+
     },
     methods:{
       async control(content){
