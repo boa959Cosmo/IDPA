@@ -20,7 +20,7 @@ var clientAddress
 // ---> UDP Shit
 
 const server = dgram.createSocket('udp4')
-const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.xlsx'), {flags: 'a'})
+const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.log'), {flags: 'a'})
 
 server.bind(PORTUDP);
 
@@ -32,12 +32,10 @@ server.on('listening', function () {
 server.on('message', (msg, remote) => {
     msg = msg.toString()
     msg = JSON.parse(msg)
-    console.log(remote.address + ':' + remote.port +' - ' + msg.category)
-    if (msg.category == 'telemetry') {
-        telemetry(msg, remote)
-        clientAddress = remote.address
-    }
-    console.log(clientAddress);
+    console.log(msg.telemetry);
+    console.log(remote.address + ':' + remote.port)
+    telemetry(msg, remote)
+
 })
 
 function telemetry(msg, remote) {
@@ -49,7 +47,7 @@ function telemetry(msg, remote) {
                         +now.getMinutes()+':'
                         +now.getSeconds()+';'
                         +remote.address +';'
-                        +msg.auto +'\r\n')  
+                        + msg.telemetry.TEMPERATURE +'\r\n')  
 }
 
 // ----------------------------------------------------------------
