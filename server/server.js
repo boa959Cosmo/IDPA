@@ -14,21 +14,32 @@ app.use(express.json())
 
 
 const PORTUDP = 6969
-const PORTBACKEND = 3000
+const PORTWEB = 3000
 var clientAddress 
+
+// ---> UDP Shit
 
 const server = dgram.createSocket('udp4')
 const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.xlsx'), {flags: 'a'})
-//------------------------------HTTP APIS
 
+server.bind(PORTUDP);
 
-app.post("/move1", (req, res) => {
-    console.log('Move 1');
+server.on('listening', function () {
+    var address = server.address();
+    console.log('UDP Server listening on ' + address.address + ":" + address.port);
+});
+
+server.on('message', (msg, remote) => {
+    msg = msg.toString()
+    msg = JSON.parse(msg)
+    console.log(remote.address + ':' + remote.port +' - ' + msg.category)
+    if (msg.category == 'telemetry') {
+        telemetry(msg, remote)
+        clientAddress = remote.address
+    }
+    console.log(clientAddress);
 })
 
-
-
-//--------------------------FUNCTIONS
 function telemetry(msg, remote) {
     let now = new Date()
     telemetryLogStream.write(now.getDate()+'.'
@@ -41,28 +52,25 @@ function telemetry(msg, remote) {
                         +msg.auto +'\r\n')  
 }
 
-//----------------------------UDP SHIT
-server.bind(PORTUDP);
+// ----------------------------------------------------------------
+// ---> Web Shit
 
-server.on('listening', function () {
-    var address = server.address();
-    console.log('UDP Server listening on ' + address.address + ":" + address.port);
-});
-
-server.on('message', (msg, remote) => {
-    msg = JSON.parse(msg)
-
-    console.log(remote.address + ':' + remote.port +' - ' + msg.category)
-    if (msg.category == 'telemetry') {
-        telemetry(msg, remote)
-        clientAddress = remote.address
+app.post("/api/control", (req,res) => {
+    console.log(req.body);
+    let message = Buffer.from(JSON.stringify({category: 'control', content: req.body.content}))
+    try {
+        server.send(message, 5005, clientAddress, function(err, bytes) {
+            console.log('control with content: '+req.body.content+' sent to ' + clientAddress +':'+ 5005);
+        })
+        res.status(200)
+    } catch(err) {
+        res.status(500)
     }
-    console.log(clientAddress);
-});
 
-
-webInterface.listen(PORTBACKEND, () => {
-    console.log("[HTTP] Online on port " + PORTBACKEND);
 })
 
+
+webInterface.listen(PORTWEB, () => {
+    console.log("[HTTP] Online on port " + PORTWEB);
+})
 
