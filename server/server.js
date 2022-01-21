@@ -8,9 +8,10 @@ const app = express()
 const socketio = require("socket.io")
 const webInterface = http.createServer(app)
 
+
 const io = socketio(webInterface, {
     cors: {
-        origin: '*:*',
+        origins:['http://localhost:8080'],
     }
 })
 
@@ -42,7 +43,12 @@ server.on('message', (msg, remote) => {
     io.emit("frame", msg.camera)
 })
 
-
+io.on('connection', (socket) => {
+    console.log('a user connected');
+    socket.on('disconnect', () => {
+      console.log('user disconnected');
+    });
+  });
 
 function telemetry(msg, remote) {
     let now = new Date()

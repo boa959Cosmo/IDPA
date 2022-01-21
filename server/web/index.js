@@ -1,5 +1,12 @@
-import server from '../server.js'
+const socket = io()
 
-function foo() {
-    server.testSend(Buffer.from(JSON.stringify({category: 'telemetry', auto: 'audi', bus: 'bmw'})))
+function initateStream() {
+    const main = document.getElementById("main")
+    socket.on("frame", (data)=>{
+        let image = document.createElement('img')
+        image.setAttribute('src', data)
+        main.appendChild(image)
+    })
 }
+
+initateStream()
