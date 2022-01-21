@@ -1,25 +1,30 @@
 <template>
-  <img v-bind:src="this.camera.frame">
+  <div>
+    <img v-bind:src="this.data.camera"/>
+  </div>
 </template>
 
 <script>
-import SocketioService from './services/socketio.service.js';
+//import SocketioService from './services/socketio.service.js';
+import io from 'socket.io-client'
+
 
 export default {
   name: 'App',
   components: {},
   data() {
     return{
-      camera: {
-        frame: ''
-      }
+      data: {},
+      socket : io('localhost:3000')
     }
   },
-  created() {
-    SocketioService.setupSocketConnection();
-  },
   mounted() {
-
+    this.socket.on('data', (data)=> {
+      this.data = JSON.parse(data)
+      this.data.camera = "data:image/jpg;base64, " + this.data.camera
+      console.log(this.data.camera)
+      console.log(this.data.telemetry.TEMPERATURE)
+    })
   }
 }
 </script>
