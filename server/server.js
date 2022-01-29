@@ -11,12 +11,16 @@ const webInterface = http.createServer(app)
 
 const io = socketio(webInterface, {
     cors: {
-        origins:['http://localhost:8080'],
+        origins:['*'],
+        rejectUnauthorized: false
     }
 })
 
+
+
 app.use(cors())
 app.use(express.json())
+//app.use(express.static(__dirname + '/client'))
 
 
 const PORTUDP = 6969
@@ -45,8 +49,8 @@ server.on('message', (msg, remote) => {
 
     io.emit("data", msg)
     msg = JSON.parse(msg)
-    console.log(remote.address + ':' + remote.port)
-    console.log(msg.camera);
+    //console.log(remote.address + ':' + remote.port)
+    //console.log(msg.camera);
     telemetry(msg, remote)
 })
 
@@ -56,6 +60,10 @@ io.on('connection', (socket) => {
       console.log('user disconnected');
     });
   });
+
+io.on("connect_error", (err) => {
+  console.log(`connect_error due to ${err.message}`);
+});
 
 function telemetry(msg, remote) {
     let now = new Date()

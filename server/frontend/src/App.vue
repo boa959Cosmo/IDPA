@@ -15,10 +15,17 @@ export default {
   data() {
     return{
       data: {},
-      socket : io('localhost:3000')
+      socket : io('188.63.53.11:3000')
     }
   },
   mounted() {
+    //this.socket.connect()
+    //this.socket.connect('188.63.53.11')
+    /*
+    this.socket.on('test', (foo)=> {
+      console.log(foo);
+    })
+    */
     this.socket.on('data', (data)=> {
       this.data = JSON.parse(data)
       this.data.camera = "data:image/jpeg;base64, " + this.data.camera
