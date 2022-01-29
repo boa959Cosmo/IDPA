@@ -21,7 +21,7 @@ export default {
   mounted() {
     this.socket.on('data', (data)=> {
       this.data = JSON.parse(data)
-      this.data.camera = "data:image/jpg;base64, " + this.data.camera
+      this.data.camera = "data:image/jpeg;base64, " + this.data.camera
       console.log(this.data.camera)
       console.log(this.data.telemetry.TEMPERATURE)
     })

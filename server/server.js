@@ -37,9 +37,16 @@ server.on('listening', function () {
 
 server.on('message', (msg, remote) => {
     msg = msg.toString()
+    msg = msg.replaceAll("'", `"`)
+    msg = msg.replaceAll(`b"`, `"`)
+    msg = msg.replaceAll(`"{`, "{")
+    msg = msg.replaceAll(`}"`, "}")
+    //msg = msg.replaceAll(`}"}`, "}}")
+
     io.emit("data", msg)
     msg = JSON.parse(msg)
     console.log(remote.address + ':' + remote.port)
+    console.log(msg.camera);
     telemetry(msg, remote)
 })
 
