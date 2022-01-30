@@ -13,7 +13,7 @@ const webInterface = http.createServer(app)
 
 const webIO = socketio(webInterface, {
     cors: {
-        origins:['http://localhost:8080'],
+        origins:['http://188.63.53.11:8080'],
         rejectUnauthorized: false
     }
 })
@@ -21,7 +21,7 @@ const webIO = socketio(webInterface, {
 
 
 app.use(cors({
-    origin: 'http://localhost:8080',
+    origin: 'http://188.63.53.11:8080',
     credentials: true,
   }));
   
@@ -31,20 +31,31 @@ app.use(express.json())
 const PORTTCP = 8088
 const PORTUDP = 6969
 const PORTWEB = 3000
-var clientAddress 
-
+var clientAddress  
+var command = {}
 // ---> UDP Shit
 
 const udpIO = dgram.createSocket('udp4')
 
+const tcpIO = net.createServer((socket) => {
+    socket.on('data', () => {
+        socket.write(JSON.stringify(command))
+        command = {}
+    })
+    socket.on('end', () => {
+        console.log('client disconnected');
+    });
+})
  
   
-
+tcpIO.listen(PORTTCP, () => {
+    console.log('tcp socket bound');
+});
 
 
 const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.log'), {flags: 'a'})
 
-udpIO.bind(PORTUDP);
+udpIO.bind(PORTUDP );
 
 udpIO.on('listening', function () {
     var address = udpIO.address();
@@ -62,19 +73,19 @@ udpIO.on('message', (msg, remote) => {
     
     msg = JSON.parse(msg)
     webIO.emit("data", msg)
-    clientAddress =remote.address
+    clientAddress = remote.address
     console.log(remote.address + ':' + remote.port)
     //console.log(msg.camera);
     telemetry(msg, remote)
 })
-
+/*
 webIO.on('connection', (socket) => {
     console.log('a user connected');
     socket.on('disconnect', () => {
       console.log('user disconnected');
     });
   });
-
+*/
 
 function telemetry(msg, remote) {
     let now = new Date()
@@ -92,15 +103,8 @@ function telemetry(msg, remote) {
 // ---> Web Shit
 
 app.post("/command", (req,res) => {
-    console.log(req.body);
-    console.log('initial check');
-    udpIO.send(JSON.stringify(req.body), 5000, clientAddress, (err) =>{
-        if(err){
-            client.close();
-        }else{
-            console.log('Data sent !!!');
-      }
-    });
+    command = req.body
+});
     /*
     let message = Buffer.from(JSON.stringify({category: 'control', content: req.body.content}))
     try {
@@ -112,7 +116,6 @@ app.post("/command", (req,res) => {
         res.status(500)
     }
 */
-})
 
 
 webInterface.listen(PORTWEB, () => {

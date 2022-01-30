@@ -16,8 +16,8 @@ export default {
   data() {
     return{
       data: {},
-      socket : io('localhost:3000'), //188.63.53.11:3000
-      api : "http://localhost:3000" //188.63.53.11
+      socket : io('188.63.53.11:3000'), //188.63.53.11:3000
+      api : "http://188.63.53.11:3000" //188.63.53.11
     }
   },
   methods: {
@@ -35,8 +35,8 @@ export default {
     })
     */
     this.socket.on('data', (data)=> {
-      this.data = JSON.parse(data)
-      this.data.camera = "data:image/jpeg;base64, " + this.data.camera
+      this.data = data
+      this.data.camera = "data:image/jpg;base64, " + this.data.camera
       console.log(this.data.camera)
       console.log(this.data.telemetry.TEMPERATURE)
     })
