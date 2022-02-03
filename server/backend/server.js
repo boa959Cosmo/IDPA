@@ -7,39 +7,39 @@ const express = require('express')
 const cors = require('cors')
 const app = express()
 const socketio = require("socket.io")
-const { resolve } = require('dns/promises')
 const webInterface = http.createServer(app)
-
-
-const webIO = socketio(webInterface, {
-    cors: {
-        origins:['http://188.63.53.11:8080'],
-        rejectUnauthorized: false
-    }
-})
 
 
 
 app.use(cors({
     origin: 'http://188.63.53.11:8080',
     credentials: true,
-  }));
+}));
   
 app.use(express.json())
-//app.use(express.static(__dirname + '/client'))
 
 const PORTTCP = 8088
 const PORTUDP = 6969
-const PORTWEB = 3000
-var clientAddress  
+const PORTWEB = 3000  
 var command = {}
-// ---> UDP Shit
 
-const udpIO = dgram.createSocket('udp4')
+// Sockets 
 
-const tcpIO = net.createServer((socket) => {
+const webIO = socketio(webInterface, { //creates websocket to communicate with frontend
+    cors: {
+        origins:['http://188.63.53.11:8080'],
+        rejectUnauthorized: false
+    }
+})
+
+const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.log'), {flags: 'a'}) //opens write Stream for log file
+
+const udpIO = dgram.createSocket('udp4') //creates udp socket to recieve data from the client
+udpIO.bind(PORTUDP); // Binds Ports to UDP socket
+
+const tcpIO = net.createServer((socket) => { // creates tcp socket to answer the client with commands
     socket.on('data', () => {
-        socket.write(JSON.stringify(command))
+        socket.write(JSON.stringify(command)) //replies whatever in this var is
         command = {}
     })
     socket.on('end', () => {
@@ -47,37 +47,28 @@ const tcpIO = net.createServer((socket) => {
     });
 })
  
-  
 tcpIO.listen(PORTTCP, () => {
-    console.log('tcp socket bound');
+    console.log('TCP Socket   listening on ' + tcpIO.address().port);
 });
 
 
-const telemetryLogStream = fs.createWriteStream(path.join(__dirname, 'telemetry.log'), {flags: 'a'})
 
-udpIO.bind(PORTUDP );
-
-udpIO.on('listening', function () {
-    var address = udpIO.address();
-    console.log('UDP Server listening on ' + address.address + ":" + address.port);
+udpIO.on('listening', () => {
+    console.log('UDP Socket   listening on ' + udpIO.address().port);
 });
 
 udpIO.on('message', (msg, remote) => {
-    msg = msg.toString()
-    msg = msg.replaceAll("'", `"`)
-    msg = msg.replaceAll(`b"`, `"`)
-    msg = msg.replaceAll(`"{`, "{")
-    msg = msg.replaceAll(`}"`, "}")
+    msg = parsePythontoJSON(msg) // parse socket input to usable JSON
 
-   //msg = msg.replaceAll(`}"}`, "}}")
+    webIO.emit("data", msg) //send UDP data to 
     
-    msg = JSON.parse(msg)
-    webIO.emit("data", msg)
-    clientAddress = remote.address
     console.log(remote.address + ':' + remote.port)
     //console.log(msg.camera);
     telemetry(msg, remote)
 })
+
+
+
 /*
 webIO.on('connection', (socket) => {
     console.log('a user connected');
@@ -96,7 +87,17 @@ function telemetry(msg, remote) {
                         +now.getMinutes()+':'
                         +now.getSeconds()+';'
                         +remote.address +';'
-                        + msg.telemetry.TEMPERATURE +'\r\n')  
+                        +msg.telemetry.TEMPERATURE +'\r\n'
+                        )
+                        
+}
+
+function parsePythontoJSON(input) {
+    try {
+        return JSON.parse(input.toString().replaceAll("'", `"`).replaceAll(`b"`, `"`).replaceAll(`"{`, "{").replaceAll(`}"`, "}"))
+    } catch (err) {
+        console.log('Failed to parse UDP socket Input to JSON');
+    }
 }
 
 // ----------------------------------------------------------------
@@ -104,21 +105,10 @@ function telemetry(msg, remote) {
 
 app.post("/command", (req,res) => {
     command = req.body
+    //check if tcp connectin is established and send succes or error message
 });
-    /*
-    let message = Buffer.from(JSON.stringify({category: 'control', content: req.body.content}))
-    try {
-        server.send(message, 5005, clientAddress, function(err, bytes) {
-            console.log('control with content: '+req.body.content+' sent to ' + clientAddress +':'+ 5005);
-        })
-        res.status(200)
-    } catch(err) {
-        res.status(500)
-    }
-*/
 
 
 webInterface.listen(PORTWEB, () => {
-    console.log("[HTTP] Online on port " + PORTWEB);
+    console.log("HTTP Server  listening on " + PORTWEB);
 })
-
